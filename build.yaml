@@ -1,0 +1,38 @@
+targets:
+  # This library (package:web_worker_channel).
+  $default:
+    sources:
+      - lib/**
+    dependencies:
+      - js
+      - stream_channel
+
+  # Main Application (web/main.dart).
+  main:
+    sources:
+      - web/main.**
+      - web/index.html
+    dependencies:
+      - web_worker_channel
+    builders:
+      build_web_compilers|entrypoint:
+        generate_for:
+          - web/main.dart
+        options:
+          compiler: dartdevc
+
+  # Web Worker (web/worker.dart).
+  worker:
+    sources:
+      - web/worker.**
+    dependencies:
+      - web_worker_channel
+    builders:
+      build_web_compilers|entrypoint:
+        generate_for:
+          - web/worker.dart
+        options:
+          compiler: dart2js
+          # Disable minification.
+          dart2js_args:
+            - --fast-startup

@@ -38,19 +38,7 @@ abstract class JsWorker extends JsEventTarget {
   /// Creates a [JsWorker].
   ///
   /// [url]: Represents the URL of the script the worker will execute.
-  /// [type]: Type of worker to create; `classic` (default) or `module`.
-  /// [credentials]: Type of credentials to use. May be
-  ///
-  /// * `omit` (default)
-  /// * `same-origin`
-  /// * `include`
-  ///
-  /// [name]: Identifying name representing the scope, useful for debugging.
-  external factory JsWorker(String url, {
-    String type,
-    String credentials,
-    String name,
-  });
+  external factory JsWorker(String url);
 
   /// Object to deliver to the worker.
   ///

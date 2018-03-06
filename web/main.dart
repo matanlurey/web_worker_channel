@@ -5,7 +5,7 @@
 import 'package:web_worker_channel/web_worker_channel.dart';
 
 void main() {
-  webWorkerChannel<String>('echo.js')
+  webWorkerChannel<String>('worker.dart.js')
       ..stream.listen((e) => print('Received: $e'))
       ..sink.add('1')
       ..sink.add('2')
