@@ -5,6 +5,7 @@
 import 'package:web_worker_channel/web_worker_channel.dart';
 
 void main() {
-  final channel = originChannel<String>();
+  print('Loaded worker.dart.js...');
+  final channel = originChannel();
   channel.sink.addStream(channel.stream);
 }
