@@ -4,46 +4,87 @@
 
 import 'dart:async';
 
-import 'package:js/js.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 import 'src/js_interop.dart';
-import 'src/js_interop_hack.dart';
+export 'src/js_interop.dart' show MessageEvent;
 
 /// Returns a [StreamChannel] that communicates with a web worker at [url].
 ///
 /// The provided [url] is expected to be pre-compiled as valid JavaScript
 /// (either using DartDevC, Dart2JS, or written in JavaScript).
-StreamChannel<T> webWorkerChannel<T>(String url) {
-  return new _PostMessageChannel(new JsWorker(url));
+StreamChannel<Object> webWorkerChannel(String url) {
+  return new _WorkerChannel(new Worker(url));
 }
 
-/// Return the current `window` as the origin channel for communication.
-StreamChannel<T> originChannel<T>() {
-  return new _PostMessageChannel<T>(selfAsWorker());
-}
+/// Returns a [StreamChannel] that communicates with the origin via postMessage.
+StreamChannel<Object> originChannel() => new _SelfChannel(self);
 
-class _PostMessageChannel<T> extends StreamChannelMixin<T> {
+/// Base class for both workers and the origin (`self`) context.
+abstract class _PostMessageChannel extends StreamChannelMixin<Object> {
   @override
-  final StreamController<T> sink = new StreamController<T>(sync: true);
+  final StreamController<Object> sink = new StreamController(sync: true);
+  final _onMessage = new StreamController<Object>(sync: true);
 
-  _PostMessageChannel(JsWorker worker) {
-    final onMessage = allowInterop(Zone.current.bindUnaryCallback((Object e) {
-      final event = e as JsMessageEvent;
-      _onMessage.add(event.data as T);
-    }));
-    worker.addEventListener('message', onMessage);
+  _PostMessageChannel() {
+    final onMessage = Zone.current.bindUnaryCallback((Event e) {
+      _onMessage.add((e as MessageEvent).data);
+    });
+    registerListener(onMessage);
     sink.stream.listen((message) {
-      // https://github.com/dart-lang/sdk/issues/32370
-      worker.postMessage(message);
+      sendPostMessage(message);
     }, onDone: () {
-      worker.removeEventListener('message', onMessage);
+      removeListener(onMessage);
       _onMessage.close();
     });
   }
 
-  final StreamController<T> _onMessage = new StreamController<T>(sync: true);
+  @override
+  Stream<Object> get stream => _onMessage.stream;
+
+  void removeListener(EventListener listener);
+  void registerListener(EventListener listener);
+  void sendPostMessage(Object message);
+}
+
+class _WorkerChannel extends _PostMessageChannel {
+  final Worker _worker;
+
+  _WorkerChannel(this._worker);
 
   @override
-  Stream<T> get stream => _onMessage.stream;
+  void registerListener(EventListener listener) {
+    _worker.addEventListener('message', listener);
+  }
+
+  @override
+  void removeListener(EventListener listener) {
+    _worker.removeEventListener('message', listener);
+  }
+
+  @override
+  void sendPostMessage(Object message) {
+    _worker.postMessage(message);
+  }
+}
+
+class _SelfChannel extends _PostMessageChannel {
+  final Self _self;
+
+  _SelfChannel(this._self);
+
+  @override
+  void registerListener(EventListener listener) {
+    _self.addEventListener('message', listener);
+  }
+
+  @override
+  void removeListener(EventListener listener) {
+    _self.removeEventListener('message', listener);
+  }
+
+  @override
+  void sendPostMessage(Object message) {
+    _self.postMessage(message);
+  }
 }
