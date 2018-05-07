@@ -27,9 +27,9 @@ abstract class _PostMessageChannel extends StreamChannelMixin<Object> {
   final _onMessage = new StreamController<Object>(sync: true);
 
   _PostMessageChannel() {
-    final onMessage = Zone.current.bindUnaryCallback((Event e) {
+    final onMessage = allowInterop(Zone.current.bindUnaryCallback((Event e) {
       _onMessage.add((e as MessageEvent).data);
-    });
+    }));
     registerListener(onMessage);
     sink.stream.listen((message) {
       sendPostMessage(message);

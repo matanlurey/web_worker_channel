@@ -6,13 +6,11 @@
 @JS()
 library web_worker_channel.src.js;
 
+import 'dart:html' show Event;
 import 'package:js/js.dart';
 
-/// Base browser interface for events.
-///
-/// https://developer.mozilla.org/en-US/docs/Web/API/Event
-@JS('Event')
-abstract class Event {}
+export 'dart:html' show Event, MessageEvent;
+export 'package:js/js.dart' show allowInterop;
 
 /// Function signature for a callback that provides an [Event].
 typedef EventListener = void Function(Event);
@@ -22,21 +20,12 @@ abstract class EventTarget {
   /// Adds the specified [listener] for the event [type].
   ///
   /// TODO: Ideally type as `addEventListener<T extends Event>`.
-  external void addEventListener(String type, EventListener listener);
+  void addEventListener(String type, EventListener listener);
 
   /// Removes the specified [listener] for the event [type].
   ///
   /// TODO: Ideally type as `removeEventListener<T extends Event>`.
-  external void removeEventListener(String type, EventListener listener);
-}
-
-/// Browser interface for a `'message'` event that provides [data].
-///
-/// https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent
-@JS('MessageEvent')
-abstract class MessageEvent extends Event {
-  /// The data sent by the message emitter.
-  Object get data;
+  void removeEventListener(String type, EventListener listener);
 }
 
 /// Dart interface for any class that provides a `postMessage` API.
@@ -52,7 +41,7 @@ abstract class HasPostMessage {
 
 /// https://developer.mozilla.org/en-US/docs/Web/API/Worker
 @JS('Worker')
-abstract class Worker extends Object with EventTarget, HasPostMessage {
+abstract class Worker implements EventTarget, HasPostMessage {
   /// Creates a [Worker].
   ///
   /// [url]: Represents the URL of the script the worker will execute.
@@ -72,7 +61,16 @@ abstract class Worker extends Object with EventTarget, HasPostMessage {
 /// Window object (or window context in a web worker).
 @JS()
 @anonymous
-abstract class Self extends Object with EventTarget, HasPostMessage {}
+abstract class Self implements EventTarget, HasPostMessage {
+  @override
+  external void addEventListener(String type, EventListener listener);
+
+  @override
+  external void removeEventListener(String type, EventListener listener);
+
+  @override
+  external void postMessage(Object message);
+}
 
 /// Window object (or window context in a web worker).
 @JS()
